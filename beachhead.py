@@ -43,7 +43,7 @@ for _ in required_modules:
 
 if len(missing_modules):
     print("Hey! You don't have everything you need. You seem to be missing\n" +
-        ",".join(missing_modules))
+        ", ".join(missing_modules))
     sys.exit(os.EX_SOFTWARE)
     
 
@@ -368,6 +368,12 @@ class Beachhead(cmd.Cmd):
             with the full file name of the one that we will use.
         """
         setproctitle.setproctitle('beachhead')
+
+        default_ssh_config_file = '~/.ssh/config'
+        f = fname.Fname(default_ssh_config_file)
+        if not f:
+            uu.tombstone('You do not seem to have an ssh config file. This program')
+            uu.tombstone('may not be very useful.')
 
         try:
             for d in [ os.environ.get(_, "") for _ in [ 'PWD' ] ]:
