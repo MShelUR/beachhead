@@ -258,7 +258,7 @@ class SmallHOP:
         try:
             port = int(port)
         except:
-            port = int(self.ssh_info['port'])
+            port = int(self.ssh_info.get('port', 22))
 
         self.sock = socket.socket(self.sock_domain, self.sock_type)
         try:
