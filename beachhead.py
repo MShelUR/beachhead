@@ -15,6 +15,7 @@ __status__ = 'PyRVA demonstration'
 __license__ = 'MIT'
 __required_version__ = (3,5)
 
+import getpass
 import os
 import sys
 import typing
@@ -194,17 +195,18 @@ class SmallHOP:
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 
         try:
+            username=self.ssh_info.get('user', getpass.getuser())
             if not self.password:
                 self.client.connect(self.ssh_info['hostname'],
                     int(self.ssh_info['port']),
-                    username=self.ssh_info['user'],
+                    username=username,
                     key_filename=self.ssh_info['identityfile'],
                     sock=self.sock)        
 
             else:
                 self.client.connect(self.ssh_info['hostname'], 
                     int(self.ssh_info['port']), 
-                    username=self.ssh_info['user'], 
+                    username=username, 
                     password=self.password,
                     sock=self.sock)
 
