@@ -13,7 +13,7 @@ import typing
 from   typing import *
 
 import fname 
-import urutils as uu
+import gkflib as gkf
 
 # Credits
 __author__ = 'George Flanagin'
@@ -46,7 +46,7 @@ class JSONReader:
         Build a list of lines that are really JSON, and join them
         back into a string. 
         """
-        if __name__ == "__main__": uu.tombstone("Strippin' the comments...")
+        if __name__ == "__main__": gkf.tombstone("Strippin' the comments...")
         if self.s is None: return self
 
         comment_free_lines = []
@@ -55,7 +55,7 @@ class JSONReader:
                 continue
 
             elif line.strip()[0] == '#': 
-                uu.tombstone(line)
+                gkf.tombstone(line)
                 continue
 
             else: comment_free_lines.append(line)
@@ -91,7 +91,7 @@ class JSONReader:
             self.attach_IO(self.origin, strip_comments)   
 
         except IOError as e:
-            uu.tombstone(uu.type_and_text(e))
+            gkf.tombstone(gkf.type_and_text(e))
             raise e from None
 
         return self
@@ -122,7 +122,7 @@ class JSONReader:
                     " at offset " + str(e.pos) + ",\nnear the end of the phrase << " +
                     self.s[start:stop] + ">> of the original input, " +
                     "Line: " + str(e.lineno) + ", column:" + str(e.colno) + ". " )
-            uu.tombstone(t)
+            gkf.tombstone(t)
             raise ue.URException(self.origin + ' failed syntax check.')
         
         return o
@@ -144,7 +144,7 @@ if __name__ == "__main__":
             printer.pprint(o)
 
         except ue.URException as e:
-            uu.squeal(str(f) + " failed to compile.")
+            gkf.squeal(str(f) + " failed to compile.")
             print(str(e))
 
 else:

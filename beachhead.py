@@ -27,7 +27,7 @@ everything we need.
 """
 
 if sys.version_info < __required_version__:
-    uu.tombstone('This program requires Python {} or greater.'.format(__required_version__))
+    gkf.tombstone('This program requires Python {} or greater.'.format(__required_version__))
     sys.exit(os.EX_SOFTWARE)
 
 required_modules = sorted([
@@ -70,7 +70,8 @@ from   paramiko import SSHClient, SSHConfig, SSHException
 
 import fname
 import jparse
-import urutils as uu
+import gkflib as gkf
+
 
 import pdb
 run_debugger = False
@@ -89,7 +90,7 @@ class SmallHOP:
     def __init__(self, do_log:bool=False):
         # Identification members
         self.my_host = socket.getfqdn().replace('-','.')
-        self.user = uu.me()
+        self.user = gkf.me()
         self.remote_host = ""
         self.remote_port = 0
         self.ssh_info = None
@@ -176,7 +177,7 @@ class SmallHOP:
         try:
             self.channel = self.transport.open_channel(data)
         except Exception as e:
-            self.error = uu.type_and_text(e)
+            self.error = gkf.type_and_text(e)
         finally:
             return self.error is not None
 
@@ -214,11 +215,11 @@ class SmallHOP:
             self.error = str(e)
 
         except TypeError as e:
-            uu.tombstone(red('Socket not open.'))
+            gkf.tombstone(red('Socket not open.'))
             self.error = -1
 
         except Exception as e:
-            self.error = uu.type_and_text(e)
+            self.error = gkf.type_and_text(e)
 
         else:
             self.open_transport()
@@ -240,7 +241,7 @@ class SmallHOP:
             self.sftp = paramiko.SFTPClient.from_transport(self.transport)
 
         except Exception as e:
-            self.error = uu.type_and_text(e)
+            self.error = gkf.type_and_text(e)
 
         finally:
             return self.error is None
@@ -251,7 +252,7 @@ class SmallHOP:
         Attemps to open a new socket with the current parameters.
         """
         self.error = None
-        self.ssh_info = uu.get_ssh_host_info(host)
+        self.ssh_info = gkf.get_ssh_host_info(host)
         if not self.ssh_info: 
             self.error = 'unknown host'
             return False
@@ -269,7 +270,7 @@ class SmallHOP:
         except socket.timeout as e:
             self.error = 'timeout of {} seconds exceeded.'.format(self.tcp_timeout)
         except Exception as e:
-            self.error = uu.type_and_text(e)
+            self.error = gkf.type_and_text(e)
         else:
             self.remote_host = hostname
             self.remote_port = port
@@ -290,7 +291,7 @@ class SmallHOP:
             self.transport = self.client.get_transport()
 
         except Exception as e:
-            self.error = uu.type_and_text(e)
+            self.error = gkf.type_and_text(e)
 
         finally:
             return self.error is None
@@ -303,11 +304,11 @@ class SmallHOP:
 ########################################################
 
 def blue(s:str) -> str:
-    return uu.BLUE + str(s) + uu.REVERT
+    return gkf.BLUE + str(s) + gkf.REVERT
 
 
 def red(s:str) -> str:
-    return uu.YELLOW + str(s) + uu.REVERT
+    return gkf.YELLOW + str(s) + gkf.REVERT
 
 
 def elapsed_time(t1, t2) -> str:
@@ -328,17 +329,17 @@ banner = [
     indent + '                                                       \'"\'|`"`',
     indent + '                                                          |',
     indent + ' ',
-    indent + '                           /                     '+uu.YELLOW + 'BEACHHEAD' + uu.REVERT,
+    indent + '                           /                     '+gkf.YELLOW + 'BEACHHEAD' + gkf.REVERT,
     indent + '                /\\________/__/\\ ',
     indent + '   ~~~    ~^~~~~\\________/____/~~~     ooo000000000000000000000000',
     indent + '               ~~~~  ~~ /~          oooooooo0000000oooo00000000000',
     indent + '....................~~^/~........^^o0o0ooo000o000o00o00o00o00o00oo',
     indent + '..<°))))><..                                        o00ooo0ooooo00',
-    indent + '............  '+ uu.RED + 'From the people who brought you Canøe.' + uu.REVERT + '  000o00ooo0o0',
+    indent + '............  '+ gkf.RED + 'From the people who brought you Canøe.' + gkf.REVERT + '  000o00ooo0o0',
     indent + '.............                                        oo00000oooooo',
     indent + '...................><{{{°>..............................oooxxx0000',
     indent + '',
-    indent + uu.RED + '  Type `help general` for more information.' + uu.REVERT,
+    indent + gkf.RED + '  Type `help general` for more information.' + gkf.REVERT,
     ' ',
     '='*80,
     ""
@@ -374,8 +375,8 @@ class Beachhead(cmd.Cmd):
         default_ssh_config_file = '~/.ssh/config'
         f = fname.Fname(default_ssh_config_file)
         if not f:
-            uu.tombstone('You do not seem to have an ssh config file. This program')
-            uu.tombstone('may not be very useful.')
+            gkf.tombstone('You do not seem to have an ssh config file. This program')
+            gkf.tombstone('may not be very useful.')
 
         try:
             for d in [ os.environ.get(_, "") for _ in [ 'PWD' ] ]:
@@ -389,22 +390,22 @@ class Beachhead(cmd.Cmd):
             try:
                 jp = jparse.JSONReader()
                 self.cfg = jp.attach_IO(self.cfg_file, True).convert()
-                uu.tombstone('Using config info read from {}'.format(self.cfg_file))
+                gkf.tombstone('Using config info read from {}'.format(self.cfg_file))
 
             except Exception as e:
-                uu.tombstone(str(e))
-                uu.tombstone('{} failed to compile.'.format(self.cfg_file))
+                gkf.tombstone(str(e))
+                gkf.tombstone('{} failed to compile.'.format(self.cfg_file))
 
         except Exception as e:
-            uu.tombstone(uu.type_and_text(e))
-            uu.tombstone('Something really bad happened.')
+            gkf.tombstone(gkf.type_and_text(e))
+            gkf.tombstone('Something really bad happened.')
             raise
 
         else:
-            uu.tombstone('No config file found.')
+            gkf.tombstone('No config file found.')
 
     def default(self, data:str="") -> None:
-        uu.tombstone(red('unknown command {}'.format(data)))
+        gkf.tombstone(red('unknown command {}'.format(data)))
         self.do_help(data)
 
 
@@ -417,7 +418,7 @@ class Beachhead(cmd.Cmd):
         Close the open socket connection (if any)
         """
         if self.hop: self.hop.close()
-        else: uu.tombstone(blue('nothing to do'))
+        else: gkf.tombstone(blue('nothing to do'))
 
 
     def do_debug(self, data:str="") -> None:
@@ -428,7 +429,7 @@ class Beachhead(cmd.Cmd):
             you cannot tell already). Otherwise, set the level.
         """
         if not len(data):
-            uu.tombstone(blue('debug level is {}'.format(self.hop.debug_level())))
+            gkf.tombstone(blue('debug level is {}'.format(self.hop.debug_level())))
             return
 
         logging_levels = {
@@ -442,7 +443,7 @@ class Beachhead(cmd.Cmd):
 
         data = data.strip().upper()
         if data not in logging_levels.keys() and data not in logging_levels.values():
-            uu.tombstone(red('not sure what this level means: {}'.format(data)))
+            gkf.tombstone(red('not sure what this level means: {}'.format(data)))
             return
             
         try:
@@ -465,18 +466,18 @@ class Beachhead(cmd.Cmd):
             return
 
         try:
-            uu.tombstone(blue('attempting remote command {}'.format(data)))
+            gkf.tombstone(blue('attempting remote command {}'.format(data)))
             in_, out_, err_ = self.hop.channel.exec_command(data)
 
         except KeyboardInterrupt as e:
-            uu.tombstone(blue('aborting. Control-C pressed.'))
+            gkf.tombstone(blue('aborting. Control-C pressed.'))
 
         except Exception as e:
-            uu.tombstone(red(uu.type_and_text(e)))
+            gkf.tombstone(red(gkf.type_and_text(e)))
 
         else:
             out_.channel.recv_exit_status();
-            uu.tombstone(blue(out_.readlines()))
+            gkf.tombstone(blue(out_.readlines()))
 
         finally:
             self.hop.open_channel()
@@ -488,7 +489,7 @@ class Beachhead(cmd.Cmd):
 
         [re]displays the error of the connection, and optionally resets it
         """
-        uu.tombstone(blue(self.hop.error))
+        gkf.tombstone(blue(self.hop.error))
         if 'reset'.startswith(data.strip().lower()): self.hop.error = None
 
 
@@ -536,7 +537,7 @@ class Beachhead(cmd.Cmd):
         Syntax: get filename
         """
         if not self.hop.sftp:
-            uu.tombstone(red('sftp channel is not open.'))
+            gkf.tombstone(red('sftp channel is not open.'))
             return
 
         if not data:
@@ -546,9 +547,9 @@ class Beachhead(cmd.Cmd):
         start_time = time.time()
         OK = self.hop.sftp.get(data, Fname(data).fname)
         stop_time = time.time()
-        if OK: uu.tombstone('success')
-        else: uu.tombstone('failure {}'.format(self.hop.error_msg()))
-        uu.tombstone('elapsed time: {}'.format(elapsed_time(stop_time, start_time)))
+        if OK: gkf.tombstone('success')
+        else: gkf.tombstone('failure {}'.format(self.hop.error_msg()))
+        gkf.tombstone('elapsed time: {}'.format(elapsed_time(stop_time, start_time)))
 
 
     def do_hosts(self, data:str="") -> None:
@@ -556,7 +557,7 @@ class Beachhead(cmd.Cmd):
         hosts:
             print a list of the available (known) hosts
         """
-        uu.tombstone("\n"+blue("\n".join(sorted(list(uu.get_ssh_host_info('all'))))))
+        gkf.tombstone("\n"+blue("\n".join(sorted(list(gkf.get_ssh_host_info('all'))))))
 
 
     def do_logging(self, data:str="") -> None:
@@ -596,7 +597,7 @@ class Beachhead(cmd.Cmd):
             return
 
         except Exception as e:
-            uu.tombstone(uu.type_and_text(e))
+            gkf.tombstone(gkf.type_and_text(e))
             return
 
         if state:
@@ -632,7 +633,7 @@ class Beachhead(cmd.Cmd):
         f = getattr(self, '_do_'+data[0], None)
 
         if f: f(data[1:]) 
-        else: uu.tombstone(red('no operation named {}'.format(data)))
+        else: gkf.tombstone(red('no operation named {}'.format(data)))
 
 
     def do_put(self, data:str="") -> None:
@@ -644,17 +645,17 @@ class Beachhead(cmd.Cmd):
             NOTE: filename can be a wildcard spec.
         """
         if not self.hop.sftp:
-            uu.tombstone(red('sftp channel is not open.'))
+            gkf.tombstone(red('sftp channel is not open.'))
             return
 
         if not data:
-            uu.tombstone(red('you have to send something ...'))
+            gkf.tombstone(red('you have to send something ...'))
             self.do_help('put')
             return
 
         files = glob.glob(data)
         if not files:
-            uu.tombstone(red('no file[s] named {}'.format(data)))
+            gkf.tombstone(red('no file[s] named {}'.format(data)))
             return
 
         start_time = time.time()
@@ -663,13 +664,13 @@ class Beachhead(cmd.Cmd):
             try:
                 OK = self.hop.sftp.put(f.fqn, f.fname)
             except Exception as e:
-                uu.tombstone(red(uu.type_and_text(e)))
+                gkf.tombstone(red(gkf.type_and_text(e)))
 
             stop_time = time.time()
-            if OK: uu.tombstone('success')
-            else: uu.tombstone('failure {}'.format(self.hop.error_msg()))
+            if OK: gkf.tombstone('success')
+            else: gkf.tombstone('failure {}'.format(self.hop.error_msg()))
 
-        uu.tombstone('elapsed time: '.format(elapsed_time(stop_time, start_time)))
+        gkf.tombstone('elapsed time: '.format(elapsed_time(stop_time, start_time)))
 
 
     def do_quit(self, data:str="") -> None:
@@ -690,7 +691,7 @@ class Beachhead(cmd.Cmd):
         Sends stuff over the channel.
         """
         if not self.hop.channel: 
-            uu.tombstone(red('channel not open.'))
+            gkf.tombstone(red('channel not open.'))
             self.do_help('send')
             return
 
@@ -700,17 +701,17 @@ class Beachhead(cmd.Cmd):
                 f = fname.Fname(filename)
                 if f: data=f()
             except Exception as e:
-                uu.tombstone(red(uu.type_and_text(e)))
+                gkf.tombstone(red(gkf.type_and_text(e)))
             
         try:
             i = self.hop.channel.send(data)
-            uu.tombstone(blue('sent {} bytes.'.format(i)))
+            gkf.tombstone(blue('sent {} bytes.'.format(i)))
 
         except KeyboardInterrupt:
-            uu.tombstone(blue('aborting. Control-C pressed.'))
+            gkf.tombstone(blue('aborting. Control-C pressed.'))
 
         except Exception as e:
-            uu.tombstone(red(uu.type_and_text(e)))
+            gkf.tombstone(red(gkf.type_and_text(e)))
             
         finally:
             self.hop.open_channel()
@@ -725,7 +726,7 @@ class Beachhead(cmd.Cmd):
         data = data.strip()
 
         if data.lower() == 'none': self.hop.password = None
-        elif not data: uu.tombstone(blue('password is set to {}'.format(self.hop.password)))
+        elif not data: gkf.tombstone(blue('password is set to {}'.format(self.hop.password)))
         else: self.hop.password = data        
 
 
@@ -737,12 +738,12 @@ class Beachhead(cmd.Cmd):
             af_unix -- a socket on local host that most people call a 'pipe'
         """
 
-        if not data: uu.tombstone(blue('socket domain is {}'.format(self.hop.sock_domain))); return
+        if not data: gkf.tombstone(blue('socket domain is {}'.format(self.hop.sock_domain))); return
         data = data.strip().lower()
 
         if data == 'af_inet': self.hop.sock_domain = socket.AF_INET
         elif data == 'af_unix': self.hop.sock_domain = socket.AF_UNIX
-        else: uu.tombstone(blue('unknown socket domain: {}'.format(data)))
+        else: gkf.tombstone(blue('unknown socket domain: {}'.format(data)))
 
 
     def do_setsocktype(self, data:str="") -> None:
@@ -754,13 +755,13 @@ class Beachhead(cmd.Cmd):
             raw    -- bare metal 
         """
         sock_types = {'stream':socket.SOCK_STREAM, 'dgram':socket.SOCK_DGRAM, 'raw':socket.SOCK_RAW }
-        if not data: uu.tombstone('socket type is {}'.format(self.hop.sock_type)); return
+        if not data: gkf.tombstone('socket type is {}'.format(self.hop.sock_type)); return
 
         try:
             self.hop.sock_type = sock_types[data.strip().lower()]                
 
         except:
-            uu.tombstone(blue('unknown socket type: {}'.format(data)))
+            gkf.tombstone(blue('unknown socket type: {}'.format(data)))
 
 
     def do_settimeout(self, data:str="") -> None:
@@ -771,22 +772,22 @@ class Beachhead(cmd.Cmd):
         Otherwise, set it and don't forget it.
         """
         if not data: 
-            uu.tombstone('timeouts (tcp, auth, banner): ({}, {}, {})'.format(
+            gkf.tombstone('timeouts (tcp, auth, banner): ({}, {}, {})'.format(
                 self.hop.tcp_timeout, self.hop.auth_timeout, self.hop.banner_timeout))
             return
 
         data = data.strip().split()
         if len(data) < 2:
-            uu.tombstone(red('missing timeout value.'))
+            gkf.tombstone(red('missing timeout value.'))
             self.do_help('settimeout')
             return
 
         try:
             setattr(self.hop, data[0]+'_timeout', float(data[1]))
         except AttributeError as e:
-            uu.tombstone(red('no timeout value for ' + data[0]))
+            gkf.tombstone(red('no timeout value for ' + data[0]))
         except ValueError as e:
-            uu.tombstone(red('bad value for timeout: {}' + data[1]))
+            gkf.tombstone(red('bad value for timeout: {}' + data[1]))
         else:
             self.do_settimeout()
 
@@ -814,24 +815,24 @@ class Beachhead(cmd.Cmd):
         """
         global members
 
-        uu.tombstone(blue("debug level: {}".format(self.hop.debug_level())))
-        if not self.hop.sock: uu.tombstone('not connected.'); return
+        gkf.tombstone(blue("debug level: {}".format(self.hop.debug_level())))
+        if not self.hop.sock: gkf.tombstone('not connected.'); return
 
-        uu.tombstone(blue("local end:     {}".format(self.hop.sock.getsockname())))
-        uu.tombstone(blue("remote end:    {}".format(self.hop.sock.getpeername())))
-        uu.tombstone(blue("type/domain:   {} / {}".format(self.hop.sock_type, self.hop.sock_domain)))
-        uu.tombstone(blue("ssh session:   {}".format(self.hop.client)))
-        uu.tombstone(blue("transport:     {}".format(self.hop.transport)))
-        uu.tombstone(blue("sftp layer:    {}".format(self.hop.sftp)))
-        uu.tombstone(blue("channel:       {}".format(self.hop.channel)))
+        gkf.tombstone(blue("local end:     {}".format(self.hop.sock.getsockname())))
+        gkf.tombstone(blue("remote end:    {}".format(self.hop.sock.getpeername())))
+        gkf.tombstone(blue("type/domain:   {} / {}".format(self.hop.sock_type, self.hop.sock_domain)))
+        gkf.tombstone(blue("ssh session:   {}".format(self.hop.client)))
+        gkf.tombstone(blue("transport:     {}".format(self.hop.transport)))
+        gkf.tombstone(blue("sftp layer:    {}".format(self.hop.sftp)))
+        gkf.tombstone(blue("channel:       {}".format(self.hop.channel)))
         try:
             banner=self.hop.transport.get_banner().decode('utf-8')
         except:
             banner="no banner found"
-        uu.tombstone(blue("banner:        {}".format(banner)))
-        uu.tombstone(blue("*** security info: ***"))
+        gkf.tombstone(blue("banner:        {}".format(banner)))
+        gkf.tombstone(blue("*** security info: ***"))
         for _ in self.hop.security.keys():
-            uu.tombstone(blue("{} : {}").format(_,self.hop.security.get(_, None)))
+            gkf.tombstone(blue("{} : {}").format(_,self.hop.security.get(_, None)))
 
 
     def do_save(self, data:str="") -> None:
@@ -850,24 +851,24 @@ class Beachhead(cmd.Cmd):
         try:
             with open(data, 'w') as f:
                 json.dump(self.cfg, f, sort_keys=True, indent=4)
-                uu.tombstone('Duplicate config file written to {}'.format(data))
+                gkf.tombstone('Duplicate config file written to {}'.format(data))
         except:
             pass
 
         old_sec_info = self.cfg.get(self.hop.remote_host, {})
         new_sec_info = self.hop.security
         if new_sec_info == {}:
-            uu.tombstone('No active connection / no data to update.')
+            gkf.tombstone('No active connection / no data to update.')
             return
 
         if old_sec_info == new_sec_info: 
-            uu.tombstone('Update not required for {}'.format(self.hop.remote_host))
+            gkf.tombstone('Update not required for {}'.format(self.hop.remote_host))
             return
 
         self.cfg[self.hop.remote_host] = new_sec_info
         with open(self.cfg_file, 'w') as f:
             json.dump(self.cfg, f, sort_keys=True, indent=4)
-            uu.tombstone('Update successful. Written to {}'.format(self.cfg_file))
+            gkf.tombstone('Update successful. Written to {}'.format(self.cfg_file))
 
 
     def do_version(self, data:str="") -> None:
@@ -894,24 +895,24 @@ class Beachhead(cmd.Cmd):
             "direct":"direct-tcpip", "x":"x11"}
 
         if data not in channel_types.keys() and data not in channel_types.values():
-            uu.tombstone(blue('unknown channel type: {}'.format(data)))
+            gkf.tombstone(blue('unknown channel type: {}'.format(data)))
             return
 
-        uu.tombstone(blue('attempting to create a channel of type {}'.format(data)))
+        gkf.tombstone(blue('attempting to create a channel of type {}'.format(data)))
 
         start_time = time.time()
         OK = self.hop.transport.open_channel(data)
         stop_time = time.time()
 
-        if OK: uu.tombstone(blue('success'))
-        else: uu.tombstone(red('failed ' + self.hop.error_msg()))
+        if OK: gkf.tombstone(blue('success'))
+        else: gkf.tombstone(red('failed ' + self.hop.error_msg()))
 
-        uu.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
+        gkf.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
 
 
     def _do_version(self) -> None:
-        uu.tombstone("This is the only version you will ever need.")
-        uu.tombstone("What difference does it make?")
+        gkf.tombstone("This is the only version you will ever need.")
+        gkf.tombstone("What difference does it make?")
         pass
 
 
@@ -938,10 +939,10 @@ class Beachhead(cmd.Cmd):
         OK = self.hop.open_session()
         stop_time = time.time()
 
-        if OK: uu.tombstone(blue('ssh session established.'))
-        else: uu.tombstone(red('failed '+self.hop.error_msg()))
+        if OK: gkf.tombstone(blue('ssh session established.'))
+        else: gkf.tombstone(red('failed '+self.hop.error_msg()))
 
-        uu.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
+        gkf.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
 
 
     def _do_sftp(self, data:list=[]) -> None:
@@ -949,18 +950,18 @@ class Beachhead(cmd.Cmd):
         Open an sftp connection to the remote host.
         """
         if not self.hop.transport:
-            uu.tombstone(red('Transport layer is not open. You must create it first.'))
+            gkf.tombstone(red('Transport layer is not open. You must create it first.'))
             return
 
-        uu.tombstone(blue('creating sftp client.'))
+        gkf.tombstone(blue('creating sftp client.'))
         start_time = time.time()
         OK = self.hop.open_sftp()
         stop_time = time.time()
 
-        if OK: uu.tombstone(blue('success'))
-        else: uu.tombstone(red('failure '+self.hop.error_msg()))
+        if OK: gkf.tombstone(blue('success'))
+        else: gkf.tombstone(red('failure '+self.hop.error_msg()))
 
-        uu.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
+        gkf.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
             
 
     def _do_socket(self, data:list=[]) -> None:
@@ -969,7 +970,7 @@ class Beachhead(cmd.Cmd):
         """
 
         if len(data) < 1: 
-            uu.tombstone('nothing to do.')
+            gkf.tombstone('nothing to do.')
             return
 
         elif len(data) == 1:
@@ -978,10 +979,10 @@ class Beachhead(cmd.Cmd):
         start_time = time.time()
         OK = self.hop.open_socket(data[0], data[1])
         stop_time = time.time()
-        if OK: uu.tombstone(blue('connected.'))
-        else: uu.tombstone(self.hop.error_msg())          
+        if OK: gkf.tombstone(blue('connected.'))
+        else: gkf.tombstone(self.hop.error_msg())          
         
-        uu.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
+        gkf.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
 
 
     def _do_transport(self, data:str="") -> None:
@@ -989,16 +990,16 @@ class Beachhead(cmd.Cmd):
         Creates a transport layer from an open/active ssh session.
         """
         if not self.hop.client:
-            uu.tombstone('You must create an ssh session before you can create a transport layer atop it.')
+            gkf.tombstone('You must create an ssh session before you can create a transport layer atop it.')
             return
 
-        uu.tombstone(blue('attempting to create a transport layer'))
+        gkf.tombstone(blue('attempting to create a transport layer'))
         start_time = time.time()
         OK = self.hop.open_transport()
         stop_time = time.time()
-        if OK: uu.tombstone(blue('success'))
-        else: uu.tombstone(red('failed '+self.hop.error_msg()))
-        uu.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
+        if OK: gkf.tombstone(blue('success'))
+        else: gkf.tombstone(red('failed '+self.hop.error_msg()))
+        gkf.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
         
 
 if __name__ == "__main__":
@@ -1014,10 +1015,10 @@ if __name__ == "__main__":
             Beachhead(do_log).cmdloop()
 
         except KeyboardInterrupt:
-            uu.tombstone("Exiting via control-C.")
+            gkf.tombstone("Exiting via control-C.")
             sys.exit(os.EX_OK)
 
         except Exception as e:
-            uu.tombstone(uu.type_and_text(e))
-            uu.tombstone(uu.formatted_stack_trace())
+            gkf.tombstone(gkf.type_and_text(e))
+            gkf.tombstone(gkf.formatted_stack_trace())
             sys.exit(1) 
