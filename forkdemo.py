@@ -7,6 +7,8 @@ import signal
 import sys
 import time
 
+# import setproctitle
+
 # Remember -- pids are certain to be unique.
 pids = set()
 
@@ -27,6 +29,7 @@ for i in range(0, 10):
     elif pid == 0:
         # if pid is zero, then this is the child, and like most newborns
         # about all we do is sleep.
+        # setproctitle.setproctitle('children')
         sys.stderr.write("I am {}, your {}th worst nightmare for the next {} sec.\n".format(
             os.getpid(), i, nap))
         time.sleep(nap)
