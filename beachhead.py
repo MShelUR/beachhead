@@ -27,7 +27,7 @@ everything we need.
 """
 
 if sys.version_info < __required_version__:
-    gkf.tombstone('This program requires Python {} or greater.'.format(__required_version__))
+    print('This program requires Python {} or greater.'.format(__required_version__))
     sys.exit(os.EX_SOFTWARE)
 
 required_modules = sorted([

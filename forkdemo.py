@@ -15,7 +15,7 @@ for i in range(0, 10):
     # If you put the random call in the child, they will each get
     # the same nap time because they each have identical copies
     # of the random number generator and its initial state.
-    nap = round(10*random.random() + 1, 3)
+    nap = round(20*random.random() + 1, 3)
     pid = os.fork()
 
     if pid > 0:
