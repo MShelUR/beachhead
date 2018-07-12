@@ -17,6 +17,7 @@ __required_version__ = (3,5)
 
 import getpass
 import os
+import random
 import sys
 import typing
 from   typing import *
@@ -31,15 +32,17 @@ if sys.version_info < __required_version__:
     sys.exit(os.EX_SOFTWARE)
 
 required_modules = sorted([
-    'setproctitle', 'simplejson', 'psutil', 'paramiko', 'croniter',
-    'dateutil', 'shlex', 'shutil', 'sortedcontainers'])
+    'setproctitle', 'simplejson', 'psutil', 'paramiko', 'croniter', 'twisted',
+    'dateutil', 'shlex', 'shutil', 'sortedcontainers', 'multimap', 'pandas',
+    'OpenSSL'])
 
-import imp
+import importlib.util
 missing_modules = set()
 for _ in required_modules:
     try:
-        imp.find_module(_)
-    except ImportError as e:
+        r = importlib.util.find_spec(_)
+        if not r: missing_modules.add(_)
+    except Exception as e:
         missing_modules.add(_)
 
 if len(missing_modules):
@@ -267,10 +270,13 @@ class SmallHOP:
         try:
             self.sock.settimeout(self.tcp_timeout)
             self.sock.connect((hostname,port))
+
         except socket.timeout as e:
             self.error = 'timeout of {} seconds exceeded.'.format(self.tcp_timeout)
+
         except Exception as e:
             self.error = gkf.type_and_text(e)
+
         else:
             self.remote_host = hostname
             self.remote_port = port
@@ -583,7 +589,6 @@ class Beachhead(cmd.Cmd):
             "off":False
             }
 
-
         if not data:
             self.do_help('logging')
             return
@@ -632,8 +637,60 @@ class Beachhead(cmd.Cmd):
         data = data.strip().split()
         f = getattr(self, '_do_'+data[0], None)
 
-        if f: f(data[1:]) 
-        else: gkf.tombstone(red('no operation named {}'.format(data)))
+        if f: 
+            f(data[1:]) 
+            return
+        else: 
+            gkf.tombstone(red('no operation named {}'.format(data)))
+
+
+    def do_probe(self, data:str="") -> None:
+        """
+        Syntax:
+            probe {host} [ host, [host] .. ]
+
+        The 'probe' is nothing more than a convenience. It connects to
+        a host with logging on and set to the debug level. The transaction
+        is appended to the logfile for later inspection.
+
+        Each probe is given a 9-digit random ID. In the logfile, you will
+        find a BEGIN TRANSACTION and an END TRANSACTION containing the information
+        that is gleaned from the probe.
+        """
+
+        self.do_logging('on')
+        self.do_debug('10')
+        
+        hostnames = data.strip().split()
+        if not hostnames: 
+            self.do_help('probe')
+            return
+
+        if 'all' in hostnames:
+            hostnames = sorted(list(gkf.get_ssh_host_info('all')))
+            hostnames.remove('*')
+        
+        transaction_log = open('beachhead.log', 'a')
+        transaction_id = "{:0>9}".format(random.randrange(1000000000))
+        try:
+            transaction_log.write('BEGIN TRANSACTION {}\n'.format(transaction_id))
+            transaction_log.flush()
+            for _ in hostnames:
+                gkf.tombstone('probing {}'.format(_))
+                transaction_log.write('probing {}\n'.format(_))
+                transaction_log.flush()
+                try:
+                    self.do_open('socket {}'.format(_))
+                    if not self.hop: continue
+                    self.do_open('session')
+                    self.do_close()
+                except Exception as e:
+                    gkf.tombstone(gkf.type_and_text(e))
+        finally:
+            transaction_log.write('END TRANSACTION {}\n'.format(transaction_id))
+            transaction_log.flush()
+            transaction_log.close()
+            gkf.tombstone("Written to logfile as transaction ID {}".format(transaction_id))
 
 
     def do_put(self, data:str="") -> None:
@@ -979,8 +1036,11 @@ class Beachhead(cmd.Cmd):
         start_time = time.time()
         OK = self.hop.open_socket(data[0], data[1])
         stop_time = time.time()
-        if OK: gkf.tombstone(blue('connected.'))
-        else: gkf.tombstone(self.hop.error_msg())          
+        if OK: 
+            gkf.tombstone(blue('connected.'))
+        else: 
+            gkf.tombstone(self.hop.error_msg())     
+            return     
         
         gkf.tombstone(blue('elapsed time: {}'.format(elapsed_time(start_time, stop_time))))
 
