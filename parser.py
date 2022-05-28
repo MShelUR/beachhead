@@ -3,6 +3,14 @@
 This is a parser for Beachhead command syntax.
 """
 
+import os
+import sys
+__required_version__ = (3,8)
+if sys.version_info < __required_version__:
+    print(f"This code will not compile in Python < {__required_version__}")
+    sys.exit(os.EX_SOFTWARE)
+
+
 ###
 # Credits
 ###
@@ -21,53 +29,24 @@ __license__ = 'MIT'
 ###
 
 import enum
-import os
 import re
-import sys
-
-__required_version__ = (3,8)
-if sys.version_info < __required_version__:
-    print(f"This code will not compile in Python < {__required_version__}")
-    sys.exit(os.EX_SOFTWARE)
-
-verbose=False
 
 ###
 # Installed imports.
 ###
-
-try:
-    import parsec
-except ImportError as e:
-    print("The beachhead parser requires parsec be installed.")
-    sys.exit(os.EX_SOFTWARE)
+import parsec
 
 ###
-# Constants
+# hpclib imports
 ###
-class Char(enum.Enum):
-    TAB     = '\t'
-    CR      = '\r'
-    LF      = '\n'
-    VTAB    = '\f'
-    BSPACE  = '\b'
-    QUOTE1  = "'"
-    QUOTE2  = '"'
-    QUOTE3  = "`"
-    LBRACE  = '{'
-    RBRACE  = '}'
-    LBRACK  = '['
-    RBRACK  = ']'
-    COLON   = ':'
-    COMMA   = ','
-    BACKSLASH   = '\\'
-    UNDERSCORE  = '_'
-    OCTOTHORPE  = '#'
-    EMPTY_STR   = ""
+from chars import Char
+import fileutils
+import linuxutils
 
 ###
 # Regular expressions.
 ###
+COMMENT     = parsec.regex(r'\s*#.*')
 IEEE754     = parsec.regex(r'-?(0|[1-9][0-9]*)([.][0-9]+)?([eE][+-]?[0-9]+)?')
 PYINT       = parsec.regex(r'[-+]?[0-9]+')
 WHITESPACE  = parsec.regex(r'\s*', re.MULTILINE)
@@ -82,24 +61,23 @@ KEYWORD = frozenset({'open', 'close', 'socket', 'connection', 'session'})
 
 lexeme = lambda p: p << WHITESPACE
 
-lbrace = lexeme(parsec.string(LBRACE))
-rbrace = lexeme(parsec.string(RBRACE))
-lbrack = lexeme(parsec.string(LBRACK))
-rbrack = lexeme(parsec.string(RBRACK))
-colon  = lexeme(parsec.string(COLON))
-comma  = lexeme(parsec.string(COMMA))
+lbrace = lexeme(parsec.string(Char.LBRACE.value))
+rbrace = lexeme(parsec.string(Char.RBRACE.value))
+lbrack = lexeme(parsec.string(Char.LBRACK.value))
+rbrack = lexeme(parsec.string(Char.RBRACK.value))
+colon  = lexeme(parsec.string(Char.COLON.value))
+comma  = lexeme(parsec.string(Char.COMMA.value))
 
 true   = lexeme(parsec.string('true')).result(True) | lexeme(parsec.string('True')).result(True)
 false  = lexeme(parsec.string('false')).result(False) | lexeme(parsec.string('False')).result(False)
 null   = lexeme(parsec.string('null')).result(None) | lexeme(parsec.string('None')).result(None)
 
-quote  = parsec.string(QUOTE2) | parsec.string(QUOTE3)
+quote  = ( parsec.string(Char.QUOTE1.value) | parsec.string(Char.QUOTE2.value) | parsec.string(Char.QUOTE3.value) )
 
 
 ###
 # Functions for parsing more complex elements.
 ###
-
 def integer() -> int:
     """
     Return a Python int, based on the commonsense def of a integer.
@@ -209,7 +187,7 @@ class IJKLparser:
         return self
 
 
-    def parse(self) -> uu.SloppyDict:
+    def parse(self) -> linuxutils.SloppyDict:
         """
         Take the input and turn it into a SloppyDict.
         """
@@ -219,7 +197,7 @@ class IJKLparser:
         self.data = open(self.inputfile).read()
         self._comment_stripper()
         try:
-            self.parsed_data = uu.deepsloppy(ijkl.parse(self.data))
+            self.parsed_data = linuxutils.deepsloppy(ijkl.parse(self.data))
             return self.parsed_data
 
         except Exception as e:
@@ -240,7 +218,7 @@ class IJKLparser:
         Rewrite the IJKL as valid JSON.
         """
         global TAB
-        f = open(uu.expandall(f), 'w')
+        f = open(fileutils.expandall(f), 'w')
         json.dump(self.parsed_data, f, indent=TAB) 
         
         

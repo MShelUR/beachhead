@@ -4,29 +4,11 @@ from   typing import *
 
 min_py = (3, 8)
 
-###
-# Standard imports, starting with os and sys
-###
 import os
 import sys
 if sys.version_info < min_py:
     print(f"This program requires Python {min_py[0]}.{min_py[1]}, or higher.")
     sys.exit(os.EX_SOFTWARE)
-
-###
-# Other standard distro imports
-###
-import argparse
-import cmd
-import contextlib
-import getpass
-import logging
-
-###
-# From hpclib
-###
-import linuxutils
-from   urdecorators import show_exceptions_and_frames as trap
 
 ###
 # Credits
@@ -40,7 +22,35 @@ __email__ = ['gflanagin@richmond.edu', 'me@georgeflanagin.com']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
+###
+# standard distro imports
+###
+import argparse
+import cmd
+import contextlib
+import getpass
+import logging
+
+###
+# From hpclib
+###
+from   colors import BashColors
+import fname
+import linuxutils
+import netutils
+import sloppytree
+from   urdecorators import trap
+
+###
+# From our project.
+###
+import parser
+
+###
+# Globals.
+###
 mynetid = getpass.getuser()
+default_ssh_config_file = '~/.ssh/config'
 
 
 verbosity_levels = {
@@ -70,7 +80,7 @@ def elapsed_time(t1, t2) -> str:
     return str(round(e,3)) + units
 
 
-indent = "     "
+indent = ' '*5
 banner = [
     "",
     ' ',
@@ -96,6 +106,9 @@ banner = [
     ""
 ]
 
+class BeachheadException(Exception): pass
+
+
 @trap
 class Beachhead(cmd.Cmd):
     """
@@ -108,9 +121,18 @@ class Beachhead(cmd.Cmd):
     prompt = "\n[beachhead]: "
     ruler = '-'
 
-    def __init__(self, myargs:):
+    def __init__(self, myargs:argparse.Namespace):
         
         cmd.Cmd.__init__(self)
+        print(Beachhead.intro)
+
+        f = fname.Fname(myargs.config)
+        if not f:
+            logging.warning('You do not seem to have an ssh config file. This program')
+            logging.warning('may not be very useful.')
+
+        self.config = netutils.get_ssh_host_info(myargs.config)
+        self.state = sloppytree.SloppyTree()
     
 
     def preloop(self) -> None:
@@ -119,11 +141,10 @@ class Beachhead(cmd.Cmd):
             with the full file name of the one that we will use.
         """
 
-        default_ssh_config_file = '~/.ssh/config'
-        f = fname.Fname(default_ssh_config_file)
-        if not f:
-            logging.warning('You do not seem to have an ssh config file. This program')
-            logging.warning('may not be very useful.')
+
+    def do_exit(self, data:str="") -> None:
+        print("\nReceived exit. Exiting.")
+        raise BeachheadException()
 
 
     def default(self, line):
@@ -144,15 +165,22 @@ def beachhead_main(myargs:argparse.Namespace) -> int:
         encoding='utf-8',
         filemode='a',
         level = verbosity_levels[myargs.verbose])    
-    beachhead_shell = Beachhead()
+    beachhead_shell = Beachhead(myargs)
 
     try:
+        print("Welcome to Beachhead.")
         beachhead_shell.cmdloop()
+        print("Exiting.")
+
     except KeyboardInterrupt as e:
         print("You pressed control-C. Exiting.")
         return os.EX_OK
+
+    except BeachheadException as e:
+        return os.EX_OK
+
     except Exception as e:
-        pass
+        print(f"Unknown exception {e}")
 
     return os.EX_OK
 
@@ -168,9 +196,10 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', type=int, default=1, choices=range(1, 6),
         help="Be chatty about what is taking place (in the log file)")
 
+    parser.add_argument('--config', type=str, default=default_ssh_config_file, 
+        help=f"defaults to {default_ssh_config_file}")
+
     myargs = parser.parse_args()
-    myargs.verbose and linuxutils.dump_cmdline(myargs)
-    if myargs.nice: os.nice(myargs.nice)
 
     try:
         sys.exit(globals()[f"{os.path.basename(__file__)[:-3]}_main"](myargs))
