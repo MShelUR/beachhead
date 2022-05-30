@@ -68,12 +68,16 @@ rbrack = lexeme(parsec.string(Char.RBRACK.value))
 colon  = lexeme(parsec.string(Char.COLON.value))
 comma  = lexeme(parsec.string(Char.COMMA.value))
 
-true   = lexeme(parsec.string('true')).result(True) | lexeme(parsec.string('True')).result(True)
-false  = lexeme(parsec.string('false')).result(False) | lexeme(parsec.string('False')).result(False)
-null   = lexeme(parsec.string('null')).result(None) | lexeme(parsec.string('None')).result(None)
+true   = (  lexeme(parsec.string('true')).result(True) | 
+            lexeme(parsec.string('True')).result(True) )
+false  = (  lexeme(parsec.string('false')).result(False) | 
+            lexeme(parsec.string('False')).result(False) )
+null   = (  lexeme(parsec.string('null')).result(None) | 
+            lexeme(parsec.string('None')).result(None) )
 
-quote  = ( parsec.string(Char.QUOTE1.value) | parsec.string(Char.QUOTE2.value) | parsec.string(Char.QUOTE3.value) )
-
+quote  = (  parsec.string(Char.QUOTE1.value) | 
+            parsec.string(Char.QUOTE2.value) | 
+            parsec.string(Char.QUOTE3.value) )
 
 ###
 # Functions for parsing more complex elements.
