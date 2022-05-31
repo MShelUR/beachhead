@@ -27,7 +27,6 @@ __license__ = 'MIT'
 ###
 # Built in imports.
 ###
-
 import enum
 import re
 
@@ -43,16 +42,26 @@ from chars import Char
 import fileutils
 import linuxutils
 
+class EndOfGenerator(StopIteration):
+    """
+    An exception raised when parsing operations terminate. Iterators raise
+    a StopIteration exception when they exhaust the input; this mod gives
+    us something useful.
+    """
+    def __init__(self, value):
+        self.value = value
+
 ###
 # Regular expressions.
 ###
+# Comment is a line in which the # is the first non-whitespace character.
 COMMENT     = parsec.regex(r'\s*#.*')
+# Floating point number
 IEEE754     = parsec.regex(r'-?(0|[1-9][0-9]*)([.][0-9]+)?([eE][+-]?[0-9]+)?')
+# Integer
 PYINT       = parsec.regex(r'[-+]?[0-9]+')
+# Allow for multiline gaps
 WHITESPACE  = parsec.regex(r'\s*', re.MULTILINE)
-
-# Just what is a keyword? One of these.
-KEYWORD = frozenset({'open', 'close', 'socket', 'connection', 'session'})
 
 ###
 # (lambda) expressions that are a part of the parsing operations.
@@ -67,6 +76,8 @@ lbrack = lexeme(parsec.string(Char.LBRACK.value))
 rbrack = lexeme(parsec.string(Char.RBRACK.value))
 colon  = lexeme(parsec.string(Char.COLON.value))
 comma  = lexeme(parsec.string(Char.COMMA.value))
+equal  = lexeme(parsec.string(Char.EQUAL.value))
+dash   = lexeme(parsec.string(Char.DASH.value))
 
 true   = (  lexeme(parsec.string('true')).result(True) | 
             lexeme(parsec.string('True')).result(True) )
@@ -80,7 +91,8 @@ quote  = (  parsec.string(Char.QUOTE1.value) |
             parsec.string(Char.QUOTE3.value) )
 
 ###
-# Functions for parsing more complex elements.
+# Functions for parsing more complex elements. These are standard across
+# most computer languages.
 ###
 def integer() -> int:
     """
@@ -118,18 +130,13 @@ def charseq() -> str:
     return string_part() | string_esc()
 
 
-class EndOfGenerator(StopIteration):
-    """
-    An exception raised when parsing operations terminate. Iterators raise
-    a StopIteration exception when they exhaust the input; this mod gives
-    us something useful.
-    """
-    def __init__(self, value):
-        self.value = value
-
 @lexeme
 @parsec.generate
 def quoted() -> str:
+    """
+    If a string is in quotes, we do not try to parse within the quotes.
+    Collect everything and return it.
+    """
     yield quote
     body = yield parsec.many(charseq())
     yield quote
@@ -137,33 +144,49 @@ def quoted() -> str:
 
 
 @parsec.generate
-def array():
+def array() -> list:
+    """
+    Handle a list of comma separated tokens, enclosed by [ ]
+    """
     yield lbrack
     elements = yield parsec.sepBy(value, comma)
     yield rbrack
     raise EndOfGenerator(elements)
 
 
+@parsec_generate
+def alnum() -> str:
+    """
+    An alphanumeric token that starts with a letter.
+    """
+    token = yield parsec.regex(r'[a-zA-Z][-_a-zA-Z0-9]*')
+    raise EndOfGenerator(token)
+
+
+@parsec_generate
+def option() -> str:
+    """
+    A double dash option.
+    """
+    yield dash
+    yield dash
+    yield alnum
+    yield value
+    raise EndOfGenerator(alnum, value)    
+
 @parsec.generate
-def object_pair():
-    key = yield parsec.regex(r'[a-zA-Z][-_a-zA-Z0-9]*') | quoted
-    if key in KEYWORD: key = f"{key}_{AX()}"
-    yield colon
+def kv_pair():
+    """
+    Handle an alphanumeric token, followed by =, followed by a value.
+    """
+    key = yield parsec.regex(r'[a-zA-Z][-_a-zA-Z0-9]*') 
+    yield equal
     val = yield value
     raise EndOfGenerator((key, val))
 
+value = quoted | integer() | number() | array | true | false | null
 
-@parsec.generate
-def ijkl_object():
-    yield lbrace
-    pairs = yield parsec.sepBy(object_pair, comma)
-    yield rbrace
-    raise EndOfGenerator(dict(pairs))
-
-
-value = quoted | integer() | number() | ijkl_object | array | true | false | null
-
-ijkl = WHITESPACE >> ijkl_object
+complete_command = WHITESPACE >> command | noun | quoted | option | value
 
 class IJKLparser: pass
 class IJKLparser:
