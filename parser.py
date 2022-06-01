@@ -42,6 +42,13 @@ from chars import Char
 import fileutils
 import linuxutils
 
+class POS(enum.Enum):
+    CMD = enum.auto()
+    NOUN = enum.auto()
+    OPTION = enum.auto()
+    VALUE = enum.auto()
+
+
 class EndOfGenerator(StopIteration):
     """
     An exception raised when parsing operations terminate. Iterators raise
