@@ -55,13 +55,15 @@ class EndOfGenerator(StopIteration):
 # Regular expressions.
 ###
 # Comment is a line in which the # is the first non-whitespace character.
-COMMENT     = parsec.regex(r'\s*#.*')
+COMMENT_LINE = re.compile(r'^\s*#.*$')
+EOL_COMMENT = parsec.regex(r'\s*#.*$')
+
 # Floating point number
-IEEE754     = parsec.regex(r'-?(0|[1-9][0-9]*)([.][0-9]+)?([eE][+-]?[0-9]+)?')
+IEEE754 = parsec.regex(r'-?(0|[1-9][0-9]*)([.][0-9]+)?([eE][+-]?[0-9]+)?')
 # Integer
-PYINT       = parsec.regex(r'[-+]?[0-9]+')
+PYINT = parsec.regex(r'[-+]?[0-9]+')
 # Allow for multiline gaps
-WHITESPACE  = parsec.regex(r'\s*', re.MULTILINE)
+WHITESPACE = parsec.regex(r'\s*', re.MULTILINE)
 
 ###
 # (lambda) expressions that are a part of the parsing operations.
@@ -89,6 +91,13 @@ null   = (  lexeme(parsec.string('null')).result(None) |
 quote  = (  parsec.string(Char.QUOTE1.value) | 
             parsec.string(Char.QUOTE2.value) | 
             parsec.string(Char.QUOTE3.value) )
+
+
+command_text = frozenset(('open', 'close', 'send', 'get'))
+noun_text = frozenset(('socket', 'connection', 'file'))
+
+command = tuple(lexeme(parsec.string(x)).result(x) for x in command_text)
+noun = tuple(lexeme(parsec.string(x)).result(x) for x in noun_text)
 
 ###
 # Functions for parsing more complex elements. These are standard across
@@ -124,10 +133,17 @@ def charseq() -> str:
             | parsec.string('n').result(Char.LF.value)
             | parsec.string('r').result(Char.CR.value)
             | parsec.string('t').result(Char.TAB.value)
+            | parsec.string('"').result(Char.QUOTE2.value)
+            | parsec.string("'").result(Char.QUOTE1.value)
             | parsec.regex(r'u[0-9a-fA-F]{4}').parsecmap(lambda s: chr(int(s[1:], 16)))
             | quote
         )
     return string_part() | string_esc()
+
+
+def eol_comment() -> str:
+    yield EOL_COMMENT
+    raise EndOfGenerator(EMPTY_STR)
 
 
 @lexeme
@@ -137,10 +153,13 @@ def quoted() -> str:
     If a string is in quotes, we do not try to parse within the quotes.
     Collect everything and return it.
     """
-    yield quote
+    open_mark = yield quote
     body = yield parsec.many(charseq())
-    yield quote
-    raise EndOfGenerator(''.join(body))
+    close_mark = yield quote
+    if open_mark != close_mark:
+        raise Exception(f"Mismatched quotes around {body}")
+    else:
+        raise EndOfGenerator(''.join(body))
 
 
 @parsec.generate
@@ -154,7 +173,7 @@ def array() -> list:
     raise EndOfGenerator(elements)
 
 
-@parsec_generate
+@parsec.generate
 def alnum() -> str:
     """
     An alphanumeric token that starts with a letter.
@@ -163,7 +182,7 @@ def alnum() -> str:
     raise EndOfGenerator(token)
 
 
-@parsec_generate
+@parsec.generate
 def option() -> str:
     """
     A double dash option.
@@ -173,6 +192,7 @@ def option() -> str:
     yield alnum
     yield value
     raise EndOfGenerator(alnum, value)    
+
 
 @parsec.generate
 def kv_pair():
@@ -184,33 +204,26 @@ def kv_pair():
     val = yield value
     raise EndOfGenerator((key, val))
 
-value = quoted | integer() | number() | array | true | false | null
 
-complete_command = WHITESPACE >> command | noun | quoted | option | value
+value = quoted | integer() | number() | array | kv_pair | alnum | true | false | null
+complete_command = WHITESPACE >> eol_comment() | command | noun | option | value
 
-class IJKLparser: pass
-class IJKLparser:
+
+class BeachheadParser: pass
+class BeachheadParser:
     """
-    A class wrapper for our language.
+    A class wrapper for commands.
     """
     def __init__(self, v:bool=False):
-        global verbose
-
         self.data = None
-        self.inputfile = None
         self.parsed_data = None
 
-        verbose = v        
 
-
-    def attachIO(self, f:str) -> IJKLparser:
+    def attachIO(self, s:str) -> BeachheadParser:
         """
-        Make sure we are parsing a 'real' file.
+        The input is a line of text.
         """
-        self.inputfile = None
-        f = fname.Fname(f)
-        if f: self.inputfile = str(f)
-
+        self.input_data = str(s)
         return self
 
 
@@ -218,41 +231,27 @@ class IJKLparser:
         """
         Take the input and turn it into a SloppyDict.
         """
-        if self.inputfile is None:
-            raise Exception("No input attached.")
+        if self.input_data is None:
+            raise Exception("No data to read.")
 
-        self.data = open(self.inputfile).read()
         self._comment_stripper()
         try:
-            self.parsed_data = linuxutils.deepsloppy(ijkl.parse(self.data))
+            self.parsed_data = linuxutils.deepsloppy(
+                complete_command.parse(self.input_data)
+                )
             return self.parsed_data
 
         except Exception as e:
             print(f"Raised {str(e)}")
             return None            
+
+        finally:
+            self.input_data = None
                         
-
-    def dumps(self) -> str:
-        """
-        Nothing but a wrapper around json.dumps
-        """
-        global TAB
-        return json.dumps(self.parsed_data, indent=TAB)
-
-
-    def dump(self, f:str) -> bool:
-        """
-        Rewrite the IJKL as valid JSON.
-        """
-        global TAB
-        f = open(fileutils.expandall(f), 'w')
-        json.dump(self.parsed_data, f, indent=TAB) 
-        
-        
 
     def _comment_stripper(self) -> None:
         """
-        Remove (illegal) bash style comments from the source code.
+        Remove bash style comments from the source code.
         Build a list of lines that are really JSON, and join them
         back into a string. 
 
@@ -262,24 +261,10 @@ class IJKLparser:
         inserted into the data instead so that the line-numbers
         stay the same, w/ or w/o the comments.
         """
-        global LF, EMPTY_STR, OCTOTHORPE, verbose
+        if not self.data or re.fullmatch(COMMENT_LINE, self.data): 
+            self.input_data = ""
 
-        if self.data is None: return self
-
-        comment_free_lines = []
-        for line in self.data.split(LF):
-            if len(line.strip()) == 0: 
-                continue
-
-            elif line.strip()[0] == OCTOTHORPE: 
-                verbose and print(line[1:])
-                continue
-
-            else: 
-                comment_free_lines.append(line)
-
-        self.data = LF.join(comment_free_lines)
-        return self
+        return
 
 
 if __name__ == '__main__':
