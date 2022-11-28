@@ -45,6 +45,7 @@ from   urdecorators import trap
 # From our project.
 ###
 import parser
+from   required import all_installed
 
 ###
 # Globals.
@@ -100,7 +101,7 @@ banner = [
     indent + '.............                                        oo00000oooooo',
     indent + '...................><{{{°>..............................oooxxx0000',
     indent + '',
-    indent + BashColors.RED + '  Type `help general` for more information.' + BashColors.REVERT,
+    indent + BashColors.RED + '  Type `help` for more information.' + BashColors.REVERT,
     ' ',
     '='*80,
     ""
@@ -113,6 +114,15 @@ class BeachheadException(Exception): pass
 class Beachhead(cmd.Cmd):
     """
     Beachhead is not a tool for the weak.
+
+    Beachhead allows you to send network packets and create network
+    objects one command at a time. For example,
+
+        open socket tcp google.com:443
+
+    will do exactly that. In the cases of connections and more 
+    complex operations, the beachhead.log file will contain a narrative
+    of the steps taken to get there.
     """    
 
     use_rawinput = True
@@ -124,7 +134,6 @@ class Beachhead(cmd.Cmd):
     def __init__(self, myargs:argparse.Namespace):
         
         cmd.Cmd.__init__(self)
-        print(Beachhead.intro)
 
         f = fname.Fname(myargs.config)
         if not f:
@@ -137,9 +146,11 @@ class Beachhead(cmd.Cmd):
 
     def preloop(self) -> None:
         """
-        Get the config (if any). This function updates the self.cfg_file class member
-            with the full file name of the one that we will use.
         """
+
+    def do_help(self, data:str="") -> None:
+        print(Beachhead.__doc__)
+        return
 
 
     def do_exit(self, data:str="") -> None:
@@ -159,7 +170,8 @@ class Beachhead(cmd.Cmd):
 @trap
 def beachhead_main(myargs:argparse.Namespace) -> int:
     """
-    
+    Run a command loop that gets commands from the user and 
+    executes them.
     """
     logging.basicConfig(filename=myargs.output, 
         encoding='utf-8',

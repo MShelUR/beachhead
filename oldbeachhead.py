@@ -84,10 +84,11 @@ members = ['kex', 'ciphers', 'digests', 'compression', 'key_types']
 class SmallHOP:
 
     __slots__ = [
-        'my_host', 'user', 'remote_host', 'remote_port', 'ssh_info',
+        'my_host', 'user', 'remote_host', 'remote_port', 'ssh_info', 
         'auth_timeout', 'banner_timeout', 'tcp_timeout', 'sock_type', 'sock_domain',
         'password', 'sock', 'transport', 'security', 'channel',
-        'client', 'sftp', 'error'
+        'client', 'sftp', 'error', 'kex', 'ciphers',
+        'digests', 'compression', 'key_types', 'sshkey'
         ]
 
     def __init__(self, do_log:bool=False):

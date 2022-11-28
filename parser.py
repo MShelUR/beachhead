@@ -43,10 +43,19 @@ import fileutils
 import linuxutils
 
 class POS(enum.Enum):
-    CMD = enum.auto()
-    NOUN = enum.auto()
-    OPTION = enum.auto()
-    VALUE = enum.auto()
+    """
+    'Part Of Speech' for directives given on the command line. 
+    """
+    CMD = 'C'
+    EMPTY = 'E'
+    FLOAT = 'F'
+    INTEGER = 'I'
+    KV_PAIR = 'K'
+    NOUN = 'N'
+    OPTION = 'O'
+    QUOTED = 'Q'
+    STRING = 'S'
+    VALUE = 'V'
 
 
 class EndOfGenerator(StopIteration):
@@ -57,6 +66,7 @@ class EndOfGenerator(StopIteration):
     """
     def __init__(self, value):
         self.value = value
+
 
 ###
 # Regular expressions.
@@ -71,6 +81,9 @@ IEEE754 = parsec.regex(r'-?(0|[1-9][0-9]*)([.][0-9]+)?([eE][+-]?[0-9]+)?')
 PYINT = parsec.regex(r'[-+]?[0-9]+')
 # Allow for multiline gaps
 WHITESPACE = parsec.regex(r'\s*', re.MULTILINE)
+# IPv4 address
+IPv4 = re.compile(r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b")
+IPv4_ADDRESS = parsec.regex(IPv4)
 
 ###
 # (lambda) expressions that are a part of the parsing operations.
@@ -114,14 +127,14 @@ def integer() -> int:
     """
     Return a Python int, based on the commonsense def of a integer.
     """
-    return lexeme(PYINT).parsecmap(int)
+    return POS.INTEGER, lexeme(PYINT).parsecmap(int)
 
 
 def number() -> float:
     """
     Return a Python float, based on the IEEE754 character representation.
     """
-    return lexeme(IEEE754).parsecmap(float)
+    return POS.FLOAT, lexeme(IEEE754).parsecmap(float)
 
 
 def charseq() -> str:
@@ -150,7 +163,7 @@ def charseq() -> str:
 
 def eol_comment() -> str:
     yield EOL_COMMENT
-    raise EndOfGenerator(EMPTY_STR)
+    raise EndOfGenerator((POS.EMPTY, EMPTY_STR))
 
 
 @lexeme
@@ -161,12 +174,9 @@ def quoted() -> str:
     Collect everything and return it.
     """
     open_mark = yield quote
-    body = yield parsec.many(charseq())
-    close_mark = yield quote
-    if open_mark != close_mark:
-        raise Exception(f"Mismatched quotes around {body}")
-    else:
-        raise EndOfGenerator(''.join(body))
+    expression = parsec.regex(f'.+?{open_mark}')
+    body = yield expression
+    raise EndOfGenerator((POS.QUOTED, body[:-1]))
 
 
 @parsec.generate
@@ -198,7 +208,7 @@ def option() -> str:
     yield dash
     yield alnum
     yield value
-    raise EndOfGenerator(alnum, value)    
+    raise EndOfGenerator(POS.OPTION, (alnum, value))   
 
 
 @parsec.generate
@@ -209,11 +219,11 @@ def kv_pair():
     key = yield parsec.regex(r'[a-zA-Z][-_a-zA-Z0-9]*') 
     yield equal
     val = yield value
-    raise EndOfGenerator((key, val))
+    raise EndOfGenerator(POS.KV_PAIR, (key, val))
 
 
 value = quoted | integer() | number() | array | kv_pair | alnum | true | false | null
-complete_command = WHITESPACE >> eol_comment() | command | noun | option | value
+# complete_command = WHITESPACE >> eol_comment() | command_ | noun_ | option | value
 
 
 class BeachheadParser: pass
