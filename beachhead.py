@@ -44,7 +44,7 @@ from   urdecorators import trap
 ###
 # From our project.
 ###
-import parser
+from   parser import *
 from   required import all_installed
 
 ###
@@ -173,10 +173,15 @@ def beachhead_main(myargs:argparse.Namespace) -> int:
     Run a command loop that gets commands from the user and 
     executes them.
     """
-    logging.basicConfig(filename=myargs.output, 
-        encoding='utf-8',
-        filemode='a',
-        level = verbosity_levels[myargs.verbose])    
+    if sys.version_info < (3,9):
+        logging.basicConfig(filename=myargs.output, 
+            filemode='a',
+            level = verbosity_levels[myargs.verbose])    
+    else:
+        logging.basicConfig(filename=myargs.output, 
+            encoding='utf-8',
+            filemode='a',
+            level = verbosity_levels[myargs.verbose])    
     beachhead_shell = Beachhead(myargs)
 
     try:
