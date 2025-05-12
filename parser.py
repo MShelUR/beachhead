@@ -55,6 +55,9 @@ na              = lexeme(parsec.string("N/A")).result(None)
 ns              = lexeme(parsec.string("n/s")).result(None)
 keyname         = lexeme(parsec.regex(r'[a-zA-Z]+'))
 
+COMMANDS = frozenset(('open', 'close', 'run', 'log'))
+OBJECTS = frozenset(('socket', 'session', 'transport')) 
+
 @parsec.generate
 def kv_pair() -> tuple:
     """

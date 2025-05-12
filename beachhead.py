@@ -34,12 +34,15 @@ import logging
 ###
 # From hpclib
 ###
+import colors
 from   colors import BashColors
 import fname
 import linuxutils
 import netutils
 import sloppytree
 from   urdecorators import trap
+
+BashColors=sloppytree.SloppyTree(BashColors)
 
 ###
 # From our project.
