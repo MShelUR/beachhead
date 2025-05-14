@@ -306,6 +306,50 @@ class SmallHOP:
     def timeouts(self) -> tuple:
         return self.tcp_timeout, self.auth_timeout, self.banner_timeout
 
+########################################################
+
+# plugins! 
+
+plugins = {}
+def load_all_plugins() -> int: # exit code
+    for r, d, f_set in os.walk("plugins"): # every dir
+        if "__pycache__" in r:
+            continue # pycache
+        sys.path.insert(0, '/'+r)
+        #print('/'+r,r,d,f_set)
+        r = r.replace("/",".")
+        for f in f_set: # every file in the dir
+            full_path = r+"."+f
+            #print(full_path)
+            try:
+                # very unsafe! 
+                #print(len(sys.modules.keys()))
+                exec(f'from {full_path[:-3]} import main as __plugins_{full_path[:-3].replace(".","_")}_main') # temp import
+                exec(f'plugins["{f[:-3]}"] = __plugins_{full_path[:-3].replace(".","_")}_main') # get main
+                # TODO: figure out how to remove the temps from cache, del doesn't work afaik
+            except:
+                pass
+
+
+
+def run_plugin(p:str,*args) -> (int, str): # exit code, return
+    if not plugins.get(p):
+        return -1, f"Plugin '{p}' not found in plugins folder"
+    try:
+        exit_code, result = exec(plugins[p](args))
+        return exit_code, result
+    except Exception as exception:
+        return -1, exception
+
+
+load_all_plugins()
+
+
+print("plugins:\n\t",plugins)
+a = 2
+run_plugin("login",sys.argv)
+print(a)
+exit()
 
 ########################################################
 
@@ -562,7 +606,9 @@ class Beachhead(cmd.Cmd):
         """
         hosts:
             print a list of the available (known) hosts
+            sets up ssh host folder if none exists
         """
+        run_plugin("setup_ssh")
         gkf.tombstone("\n"+blue("\n".join(sorted(list(gkf.get_ssh_host_info('all'))))))
 
 

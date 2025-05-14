@@ -1,1 +1,165 @@
-{"starr.richmond.edu": {"ciphers": ["aes128-ctr", "aes192-ctr", "aes256-ctr", "aes128-cbc", "aes192-cbc", "aes256-cbc", "blowfish-cbc", "3des-cbc"], "compression": ["none"], "kex": ["ecdh-sha2-nistp256", "ecdh-sha2-nistp384", "ecdh-sha2-nistp521", "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1"], "key_types": ["ssh-rsa", "ssh-ed25519", "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521", "ssh-dss"], "digests": ["hmac-sha2-256", "hmac-sha2-512", "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96"]}, "xed4.richmond.edu": {"compression": ["none"], "kex": ["ecdh-sha2-nistp256", "ecdh-sha2-nistp384", "ecdh-sha2-nistp521", "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1"], "host_key": "AAAAB3NzaC1yc2EAAAABIwAAAQEAr5XAo25Jn5YiJV2eeFbqdHyKVVaCD9i2XwptBOEReylZ6ApdzJR2qT6/zVFWMXmcE5cnkJI/Hzbyct8mDIfV3m8MgWhP2MhIrWOf9p/NBa+EMyRBji65gZSo5Wdk14te79yBr2+4jvHqzAfEuA4/mrTdefUPILGkSpP4I+M7zKUIo8e+BK5Z3y2L2zSHnp2LQVN88d5xKF4d9h83jhThe33ElTIpLQaHrAfKLmoVPOPqcLoqaCLhthN9MiFiAZzKWpVJZoobzRtTDxUTEtu/aD7nZPp0+gX/0Mtf9DZD8IO7O/v0ccti6J4SRP/TUZzTcy5pLf4VyFBH5aRp8n7DGQ==", "ciphers": ["aes128-ctr", "aes192-ctr", "aes256-ctr", "aes128-cbc", "aes192-cbc", "aes256-cbc", "blowfish-cbc", "3des-cbc"], "key_types": ["ssh-rsa", "ssh-ed25519", "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521", "ssh-dss"], "digests": ["hmac-sha2-256", "hmac-sha2-512", "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96"]}, "xed1.richmond.edu": {"compression": ["none"], "kex": ["ecdh-sha2-nistp256", "ecdh-sha2-nistp384", "ecdh-sha2-nistp521", "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1"], "host_key": "AAAAB3NzaC1yc2EAAAABIwAAAQEAy/9xKF57YJvfltQp42/CLCqa2cAnLCAzhvbmsr+JzkCsQffc5ZT4ApGmtDoWwK8BWvSVPwg5YXQbmWHAhmCuVg6LrtwuhNX2Qr/jIktud5v6vr11q1GxKACZZ2szXgrhqV8zAqHPAw+guxy5nABAlI3wGdKgYxsjndhKUa7aTZ538u3oSDjzGzvnqfB90YHJKrxiAftzM29DJjYoF88KPgY23iqjzCNtMYyONBLhmynDW6xwd++P1t5czVNG+6Y0qi96fpFjOOQ93PBP4GF3VIRud1+npjlyaBhxXWcSF0cqJbrCt1WElAimtA1xBiRNqbUhlyL2PEs5WA/RHjTMDw==", "ciphers": ["aes128-ctr", "aes192-ctr", "aes256-ctr", "aes128-cbc", "aes192-cbc", "aes256-cbc", "blowfish-cbc", "3des-cbc"], "key_types": ["ssh-rsa", "ssh-ed25519", "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521", "ssh-dss"], "version": "SSH-2.0-OpenSSH_5.3", "digests": ["hmac-sha2-256", "hmac-sha2-512", "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96"]}, "xed3.richmond.edu": {"ciphers": ["aes128-ctr", "aes192-ctr", "aes256-ctr", "aes128-cbc", "aes192-cbc", "aes256-cbc", "blowfish-cbc", "3des-cbc"], "compression": ["none"], "kex": ["ecdh-sha2-nistp256", "ecdh-sha2-nistp384", "ecdh-sha2-nistp521", "diffie-hellman-group-exchange-sha256", "diffie-hellman-group-exchange-sha1", "diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1"], "key_types": ["ssh-rsa", "ssh-ed25519", "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521", "ssh-dss"], "digests": ["hmac-sha2-256", "hmac-sha2-512", "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96"]}}
+{
+    "starr.richmond.edu": {
+        "ciphers": [
+            "aes128-ctr",
+            "aes192-ctr",
+            "aes256-ctr",
+            "aes128-cbc",
+            "aes192-cbc",
+            "aes256-cbc",
+            "blowfish-cbc",
+            "3des-cbc"
+        ],
+        "compression": [
+            "none"
+        ],
+        "kex": [
+            "ecdh-sha2-nistp256",
+            "ecdh-sha2-nistp384",
+            "ecdh-sha2-nistp521",
+            "diffie-hellman-group-exchange-sha256",
+            "diffie-hellman-group-exchange-sha1",
+            "diffie-hellman-group14-sha1",
+            "diffie-hellman-group1-sha1"
+        ],
+        "key_types": [
+            "ssh-rsa",
+            "ssh-ed25519",
+            "ecdsa-sha2-nistp256",
+            "ecdsa-sha2-nistp384",
+            "ecdsa-sha2-nistp521",
+            "ssh-dss"
+        ],
+        "digests": [
+            "hmac-sha2-256",
+            "hmac-sha2-512",
+            "hmac-sha1",
+            "hmac-md5",
+            "hmac-sha1-96",
+            "hmac-md5-96"
+        ]
+    },
+    "xed4.richmond.edu": {
+        "compression": [
+            "none"
+        ],
+        "kex": [
+            "ecdh-sha2-nistp256",
+            "ecdh-sha2-nistp384",
+            "ecdh-sha2-nistp521",
+            "diffie-hellman-group-exchange-sha256",
+            "diffie-hellman-group-exchange-sha1",
+            "diffie-hellman-group14-sha1",
+            "diffie-hellman-group1-sha1"
+        ],
+        "host_key": "AAAAB3NzaC1yc2EAAAABIwAAAQEAr5XAo25Jn5YiJV2eeFbqdHyKVVaCD9i2XwptBOEReylZ6ApdzJR2qT6/zVFWMXmcE5cnkJI/Hzbyct8mDIfV3m8MgWhP2MhIrWOf9p/NBa+EMyRBji65gZSo5Wdk14te79yBr2+4jvHqzAfEuA4/mrTdefUPILGkSpP4I+M7zKUIo8e+BK5Z3y2L2zSHnp2LQVN88d5xKF4d9h83jhThe33ElTIpLQaHrAfKLmoVPOPqcLoqaCLhthN9MiFiAZzKWpVJZoobzRtTDxUTEtu/aD7nZPp0+gX/0Mtf9DZD8IO7O/v0ccti6J4SRP/TUZzTcy5pLf4VyFBH5aRp8n7DGQ==",
+        "ciphers": [
+            "aes128-ctr",
+            "aes192-ctr",
+            "aes256-ctr",
+            "aes128-cbc",
+            "aes192-cbc",
+            "aes256-cbc",
+            "blowfish-cbc",
+            "3des-cbc"
+        ],
+        "key_types": [
+            "ssh-rsa",
+            "ssh-ed25519",
+            "ecdsa-sha2-nistp256",
+            "ecdsa-sha2-nistp384",
+            "ecdsa-sha2-nistp521",
+            "ssh-dss"
+        ],
+        "digests": [
+            "hmac-sha2-256",
+            "hmac-sha2-512",
+            "hmac-sha1",
+            "hmac-md5",
+            "hmac-sha1-96",
+            "hmac-md5-96"
+        ]
+    },
+    "xed1.richmond.edu": {
+        "compression": [
+            "none"
+        ],
+        "kex": [
+            "ecdh-sha2-nistp256",
+            "ecdh-sha2-nistp384",
+            "ecdh-sha2-nistp521",
+            "diffie-hellman-group-exchange-sha256",
+            "diffie-hellman-group-exchange-sha1",
+            "diffie-hellman-group14-sha1",
+            "diffie-hellman-group1-sha1"
+        ],
+        "host_key": "AAAAB3NzaC1yc2EAAAABIwAAAQEAy/9xKF57YJvfltQp42/CLCqa2cAnLCAzhvbmsr+JzkCsQffc5ZT4ApGmtDoWwK8BWvSVPwg5YXQbmWHAhmCuVg6LrtwuhNX2Qr/jIktud5v6vr11q1GxKACZZ2szXgrhqV8zAqHPAw+guxy5nABAlI3wGdKgYxsjndhKUa7aTZ538u3oSDjzGzvnqfB90YHJKrxiAftzM29DJjYoF88KPgY23iqjzCNtMYyONBLhmynDW6xwd++P1t5czVNG+6Y0qi96fpFjOOQ93PBP4GF3VIRud1+npjlyaBhxXWcSF0cqJbrCt1WElAimtA1xBiRNqbUhlyL2PEs5WA/RHjTMDw==",
+        "ciphers": [
+            "aes128-ctr",
+            "aes192-ctr",
+            "aes256-ctr",
+            "aes128-cbc",
+            "aes192-cbc",
+            "aes256-cbc",
+            "blowfish-cbc",
+            "3des-cbc"
+        ],
+        "key_types": [
+            "ssh-rsa",
+            "ssh-ed25519",
+            "ecdsa-sha2-nistp256",
+            "ecdsa-sha2-nistp384",
+            "ecdsa-sha2-nistp521",
+            "ssh-dss"
+        ],
+        "version": "SSH-2.0-OpenSSH_5.3",
+        "digests": [
+            "hmac-sha2-256",
+            "hmac-sha2-512",
+            "hmac-sha1",
+            "hmac-md5",
+            "hmac-sha1-96",
+            "hmac-md5-96"
+        ]
+    },
+    "xed3.richmond.edu": {
+        "ciphers": [
+            "aes128-ctr",
+            "aes192-ctr",
+            "aes256-ctr",
+            "aes128-cbc",
+            "aes192-cbc",
+            "aes256-cbc",
+            "blowfish-cbc",
+            "3des-cbc"
+        ],
+        "compression": [
+            "none"
+        ],
+        "kex": [
+            "ecdh-sha2-nistp256",
+            "ecdh-sha2-nistp384",
+            "ecdh-sha2-nistp521",
+            "diffie-hellman-group-exchange-sha256",
+            "diffie-hellman-group-exchange-sha1",
+            "diffie-hellman-group14-sha1",
+            "diffie-hellman-group1-sha1"
+        ],
+        "key_types": [
+            "ssh-rsa",
+            "ssh-ed25519",
+            "ecdsa-sha2-nistp256",
+            "ecdsa-sha2-nistp384",
+            "ecdsa-sha2-nistp521",
+            "ssh-dss"
+        ],
+        "digests": [
+            "hmac-sha2-256",
+            "hmac-sha2-512",
+            "hmac-sha1",
+            "hmac-md5",
+            "hmac-sha1-96",
+            "hmac-md5-96"
+        ]
+    }
+}
