@@ -74,6 +74,7 @@ from   paramiko import SSHClient, SSHConfig, SSHException
 import fname
 import jparse
 import gkflib as gkf
+from hpclib import urdecorators
 
 
 import pdb
@@ -87,7 +88,7 @@ class SmallHOP:
         'my_host', 'user', 'remote_host', 'remote_port', 'ssh_info',
         'auth_timeout', 'banner_timeout', 'tcp_timeout', 'sock_type', 'sock_domain',
         'password', 'sock', 'transport', 'security', 'channel',
-        'client', 'sftp', 'error'
+        'client', 'sftp', 'error', 'do_logging'
         ]
 
     def __init__(self, do_log:bool=False):
@@ -115,11 +116,10 @@ class SmallHOP:
         self.channel = None
         self.client = None
         self.sftp = None
+        self.do_logging = do_log
 
         # Most recent error.
         self.error = None
-        if do_log:
-            self.do_logging('on')
 
     
     def __bool__(self) -> bool: 
@@ -310,46 +310,48 @@ class SmallHOP:
 
 # plugins! 
 
-plugins = {}
-def load_all_plugins() -> int: # exit code
-    for r, d, f_set in os.walk("plugins"): # every dir
-        if "__pycache__" in r:
-            continue # pycache
-        sys.path.insert(0, '/'+r)
-        #print('/'+r,r,d,f_set)
-        r = r.replace("/",".")
-        for f in f_set: # every file in the dir
-            full_path = r+"."+f
-            #print(full_path)
-            try:
-                # very unsafe! 
-                #print(len(sys.modules.keys()))
-                exec(f'from {full_path[:-3]} import main as __plugins_{full_path[:-3].replace(".","_")}_main') # temp import
-                exec(f'plugins["{f[:-3]}"] = __plugins_{full_path[:-3].replace(".","_")}_main') # get main
-                # TODO: figure out how to remove the temps from cache, del doesn't work afaik
-            except:
-                pass
+from hpclib import fileutils, urlogger, urdecorators
+import pathlib
+logger = urlogger.URLogger(level=logging.DEBUG,rotator=2,logfile="beachhead_startup.log")
 
+
+plugins = {}
+def load_plugin(plugin_path: str) -> int:
+    plugin_name = plugin_path.stem
+    module_spec = importlib.util.spec_from_file_location(plugin_name, plugin_path)
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    
+    if hasattr(module, 'main') and callable(module.main):
+        plugins[plugin_name] = module.main
+        return 0
+    else:
+        logger.error(f"Plugin {plugin_name} is mising main function, ignoring.")
+    
+
+# find and load plugins
+for plugin_path in tuple(fileutils.all_files_in('plugins/')):
+    plugin_path = pathlib.Path(plugin_path)
+    if plugin_path.glob("*.py"):
+        load_plugin(plugin_path)
 
 
 def run_plugin(p:str,*args) -> (int, str): # exit code, return
     if not plugins.get(p):
+        logger.debug(f"Plugin '{p}' called but not found in plugins folder")
         return -1, f"Plugin '{p}' not found in plugins folder"
     try:
+        logger.debug(f"Running plugin {p}")
         exit_code, result = exec(plugins[p](args))
         return exit_code, result
     except Exception as exception:
+        logger.error(f"Plugin {p} failed: {str(exception)}")
         return -1, exception
 
 
-load_all_plugins()
 
-
-print("plugins:\n\t",plugins)
-a = 2
-run_plugin("login",sys.argv)
-print(a)
-exit()
+#run_plugin('ssh_setup')
+#exit()
 
 ########################################################
 
@@ -393,7 +395,21 @@ banner = [
     ' ',
     '='*80,
     ""
-]
+] 
+
+from io import StringIO
+terminal_mode = True
+old_stdout = sys.stdout
+old_stderr = sys.stderr
+if not os.isatty(0):
+    terminal_mode = False
+    banner = [gkf.REVERT,'\nBEACHHEAD']
+    #logfile = open('output.txt', 'w')
+    #sys.stdout = logfile
+    #sys.stderr = logfile
+    logger_stdout = StringIO()
+    sys.stdout = logger_stdout
+    sys.stderr = logger_stdout
 
 __default_config__ = 'beachhead.json'
 class Beachhead: pass
@@ -413,6 +429,10 @@ class Beachhead(cmd.Cmd):
         self.hop = SmallHOP(do_log)
         self.cfg = {}
         self.cfg_file = None
+
+    def precmd(self, line):
+        if not terminal_mode: print(line)
+        return line
 
     
     def preloop(self) -> None:
@@ -550,6 +570,18 @@ class Beachhead(cmd.Cmd):
         """
         sys.exit(os.EX_OK)
 
+    def do_EOF(self, data:str="") -> None:
+        """
+        EOF:
+            end of file, print out commands
+        """
+        print("exited via EOF")
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+
+        print(logger_stdout.getvalue())
+        sys.exit(os.EX_OK)
+
 
     def do_general(self, data:str="") -> None:
         """
@@ -608,7 +640,6 @@ class Beachhead(cmd.Cmd):
             print a list of the available (known) hosts
             sets up ssh host folder if none exists
         """
-        run_plugin("setup_ssh")
         gkf.tombstone("\n"+blue("\n".join(sorted(list(gkf.get_ssh_host_info('all'))))))
 
 
@@ -929,10 +960,11 @@ class Beachhead(cmd.Cmd):
         gkf.tombstone(blue("sftp layer:    {}".format(self.hop.sftp)))
         gkf.tombstone(blue("channel:       {}".format(self.hop.channel)))
         try:
-            banner=self.hop.transport.get_banner().decode('utf-8')
+            banner= self.hop.transport.get_banner().decode('utf-8') if os.isatty(0) else ''
         except:
             banner="no banner found"
-        gkf.tombstone(blue("banner:        {}".format(banner)))
+        if os.isatty(0):
+            gkf.tombstone(blue("banner:        {}".format(banner)))
         gkf.tombstone(blue("*** security info: ***"))
         for _ in self.hop.security.keys():
             gkf.tombstone(blue("{} : {}").format(_,self.hop.security.get(_, None)))
@@ -1118,7 +1150,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-            Beachhead(do_log).cmdloop()
+            Beachhead(True).cmdloop()
 
         except KeyboardInterrupt:
             gkf.tombstone("Exiting via control-C.")
